@@ -1,0 +1,25 @@
+groups:
+
+- name: DanielqsjKafkaExporter
+
+  rules:
+
+    - alert: Kafka同步副本数小于3
+      expr: 'kafka_topic_partition_in_sync_replica < 3'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Kafka topics replicas (instance {{ $labels.instance }})
+        description: "Kafka topic partition in-sync replicas is less than 3 \n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}" 
+
+    - alert: Kafka消费堆积
+      expr: 'sum(kafka_consumergroup_lag) by (consumergroup,topic,job,instance)  -  ignoring(consumergroup) group_left(topic)  sum(increase(kafka_topic_partition_current_offset[5m])) by(topic,job,instance) > 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Kafka consumers group (instance {{ $labels.instance }})
+        description: "Kafka consumers group lag is over 5 minutes \n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"

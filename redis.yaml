@@ -1,0 +1,177 @@
+groups:
+
+- name: Oliver006RedisExporter
+
+  rules:
+
+    - alert: Redis节点故障
+      expr: 'redis_up == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis down (instance {{ $labels.instance }})
+        description: "Redis instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+    - alert: Redis master节点切换
+      expr: 'changes(redis_instance_info{role="master"}[1m]) > 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis master changes(instance {{ $labels.instance }})
+        description: "Redis master changes\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+    - alert: Redis master的从节点数发生变化
+      expr: 'changes(redis_connected_slaves[1m]) > 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: redis master connect slaves nums changes (instance {{ $labels.instance }})
+        description: "redis master connect slaves nums changes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+    #- alert: RedisClusterSlavechangSoMuch
+    #  expr: 'changes(redis_connected_slaves[1m]) > 1'
+    #  for: 2m
+    #  labels:
+    #    severity: critical
+    #  annotations:
+    #    summary: Redis cluster slave nums change too quickly (instance {{ $labels.instance }})
+    #    description: "Redis cluster slave nums change too quickly\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    #value: "{{ $value }}"
+
+    #- alert: RedisMissingBackup
+    #  expr: 'time() - redis_rdb_last_save_timestamp_seconds > 60 * 60 * 24'
+    #  for: 0m
+    #  labels:
+    #    severity: critical
+    #  annotations:
+    #    summary: Redis missing backup (instance {{ $labels.instance }})
+    #    description: "Redis has not been backuped for 24 hours\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    #value: "{{ $value }}"
+
+    - alert: Redis 内存使用超过90% 
+      expr: 'redis_memory_used_bytes / redis_total_system_memory_bytes * 100 > 90'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Redis out of system memory (instance {{ $labels.instance }})
+        description: "Redis is running out of system memory (> 90%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+    #- alert: RedisOutOfConfiguredMaxmemory
+    #  expr: 'redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90'
+    #  for: 2m
+    #  labels:
+    #    severity: warning
+    #  annotations:
+    #    summary: Redis out of configured maxmemory (instance {{ $labels.instance }})
+    #    description: "Redis is running out of configured maxmemory (> 90%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    #value: "{{ $value }}"
+
+    - alert: Redis连接数超过3000
+      expr: 'redis_connected_clients > 3000'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Redis too many connections (instance {{ $labels.instance }})
+        description: "Redis instance has too many connections\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+    - alert: Redis连接数增长下降超过500
+      expr: 'delta(redis_connected_clients[1m]) >500 or delta(redis_connected_clients[1m]) < -500'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Redis not enough connections (instance {{ $labels.instance }})
+        description: "Redis instance should have more connections (> 5)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+    - alert: Redis拒绝连接
+      expr: 'increase(redis_rejected_connections_total[1m]) > 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis rejected connections (instance {{ $labels.instance }})
+        description: "Some connections to Redis has been rejected\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+        
+    - alert: Redis副本同步滞后时间过长超过5s
+      expr: 'redis_connected_slave_lag_seconds > 5'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis replica lag (instance {{ $labels.instance }})
+        description: "redis slave lag is too much \n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+        
+    - alert: Redis内存不足驱逐key
+      expr: 'increase(redis_evicted_keys_total[1m]) > 0'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis evicted keys due to memeory not enough (instance {{ $labels.instance }})
+        description: "Redis evicted keys due to memeory not enough\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+        
+    - alert: Redis集群master切换
+      expr: 'increase(redis_cluster_current_epoch[1m]) > 0'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Redis cluster master switch (instance {{ $labels.instance }})
+        description: "Redis cluster master switch\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+        
+    - alert: Redis集群故障
+      expr: 'redis_cluster_state == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis cluster state down (instance {{ $labels.instance }})
+        description: "Redis cluster state down \n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+        
+        
+    - alert: Redis集群slots失败
+      expr: 'redis_cluster_slots_ok < 16384'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis cluster slots failed (instance {{ $labels.instance }})
+        description: "Redis cluster slot failed \n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+        
+    - alert: Redis集群slots标记失败
+      expr: 'redis_cluster_slots_pfail > 0'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Redis cluster slot Pfailed (instance {{ $labels.instance }})
+        description: "Redis cluster slot Pfailed \n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+        
+    - alert: Redis集群节点变化或失败
+      expr: 'changes(redis_cluster_known_nodes[1m]) > 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Redis nodes failed or changes (instance {{ $labels.instance }})
+        description: "Redis nodes failed or changes \n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+

@@ -1,0 +1,125 @@
+groups:
+   - name: es_rules
+     rules:
+        
+        - alert: Elasticsearch 集群状态red
+          expr:  elasticsearch_cluster_health_status{color="red"} == 1
+          for: 0m
+          labels: 
+              severity: critical
+          annotations: 
+              summary: "集群主分片缺失 {{ $labels.instance }}"
+              description: "主分片缺失，集群故障 lables:{{ $labels }}"
+              value: "{{ $value }}"
+        
+        - alert: Elasticsearch 集群状态yellow
+          expr:  elasticsearch_cluster_health_status{color="yellow"}==1
+          for: 0m
+          labels:
+              severity: warning
+          annotations: 
+              summary: "副本分片缺失 {{ $labels.instance }}"
+              description: "副本分片缺失 labels:{{ $labels }}"
+              value: "{{ $value }}"
+        
+        - alert: Elasticsearch jvm内存使用超过80%
+          expr:  elasticsearch_jvm_memory_used_bytes{area="heap"} / elasticsearch_jvm_memory_max_bytes{area="heap"} > 0.8
+          for: 3m
+          labels: 
+              severity: warning
+          annotations:
+              summary: "{{ $labels.instance }}  heap usage is high"
+              description: "jvm heap usage is high 80% lables: {{ $labels }}"
+              value: "{{ $value }}"
+        
+        - alert: Elasticsearch 集群异常
+          expr:  elasticsearch_cluster_health_up !=1
+          for: 0m
+          labels: 
+              severity: critical
+          annotations:
+              summary: "{{ $labels.instance }} 集群状态失败"
+              description: "last scrape of the ElasticSearch cluster health failed lables: {{ $labels }}"
+              value: "{{ $value }}"
+        
+        - alert: ElasticSearch 存活节点数小于3 或存活节点发生变化
+          expr:  elasticsearch_cluster_health_number_of_nodes < 3 or changes(elasticsearch_cluster_health_number_of_nodes[1m]) >0
+          for: 1m
+          labels: 
+              severity: critical
+          annotations:
+              summary: "{{ $labels.instance }}"
+              description: "There are only {{$value}} < 3 ElasticSearch nodes running lables: {{ $labels }}"
+              value: "{{ $value }}"
+
+        - alert: Elasticsearch GC频率大于5/s
+          expr:  rate(elasticsearch_jvm_gc_collection_seconds_count{}[5m])>5
+          for: 5m
+          labels:
+              severity: info
+          annotations:
+              summary: "每秒GC大于5次 {{ $labels.instance }}"
+              description: "Count of JVM GC runs > 5 per sec and has a value of {{ $value }} lables: {{ $labels }}"
+              value: "{{ $value }}"
+        
+        - alert: Elasticsearch GC时间大于0.3/s
+          expr:  rate(elasticsearch_jvm_gc_collection_seconds_sum[5m])>0.3
+          for: 5m
+          labels: 
+              severity: info
+          annotations:
+              summary: "平均每秒GC大于0.3s {{ $labels.instance }}"
+              description: "GC run time in seconds > 0.3 sec and has a value of {{ $value }} lables: {{ $labels }}"
+              value: "{{ $value }}"
+ 
+        - alert: Elasticsearch json序列化失败
+          expr:  elasticsearch_cluster_health_json_parse_failures>0
+          for: 5m
+          labels: 
+              severity: warning
+          annotations:
+              summary: "json序列化失败 {{ $labels.instance }}"
+              description: "json parse failures > 0 and has a value of {{ $value }} lables: {{ $labels }}"
+              value: "{{ $value }}"
+              
+        
+        - alert: Elasticsearch 触发熔断
+          expr:  rate(elasticsearch_breakers_tripped{}[5m])>0
+          for: 2m
+          labels: 
+              severity: critical
+          annotations:
+              summary: "触发熔断的平均频率 {{ $labels.instance }}"
+              description: " breakers tripped > 0 and has a value of {{ $value }} lables: {{ $labels }}"
+              value: "{{ $value }}"
+        
+        - alert: Elasticsearch 集群健康检查超时
+          expr:  elasticsearch_cluster_health_timed_out>0
+          for: 120s
+          labels: 
+              severity: critical
+          annotations:
+              summary: "健康检查超时 {{ $labels.instance }}"
+              description: "Number of cluster health checks timed out > 0 and has a value of {{ $value }} lables: {{ $labels }}"
+              value: "{{ $value }}"
+   
+        - alert: Elasticsearch 线程池拒绝数
+          expr:  delta(elasticsearch_thread_pool_rejected_count[1m]) >0
+          for: 120s
+          labels:
+              severity: warning
+          annotations:
+              summary: "线程池决绝操作数{{ $labels.instance }}"
+              description: "线程池拒绝操作数 lables: {{ $labels }}"
+              value: "{{ $value }}"
+   
+        - alert: Elasticsearch 出现排队任务 
+          expr:  delta(elasticsearch_thread_pool_rejected_count[1m]) > 0
+          for: 120s
+          labels:
+              severity: warning
+          annotations:
+              summary: "出现排队任务{{ $labels.instance }}"
+              description: "出现排队任务 lables: {{ $labels }}"
+              value: "{{ $value }}"
+

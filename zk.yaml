@@ -1,0 +1,46 @@
+groups:
+
+- name: DabealuZookeeperExporter
+
+  rules:
+
+    - alert: Zookeeper节点Down
+      expr: 'zk_up == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Zookeeper Down (instance {{ $labels.instance }})
+        description: "Zookeeper down on instance {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+    - alert: Zookeeper leader数不为1，集群故障
+      expr: 'sum(zk_server_leader)by(instance,job) != 1'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Zookeeper missing leader (instance {{ $labels.instance }})
+        description: "Zookeeper cluster has no node marked as leader\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+
+
+    - alert: Zookeeper节点故障
+      expr: 'zk_ruok == 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Zookeeper Not Ok (instance {{ $labels.instance }})
+        description: "Zookeeper instance is not ok\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
+      
+    - alert: Zookeeper请求堆积
+      expr: 'zk_outstanding_requests > 500'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Zookeeper outstanding requests (instance {{ $labels.instance }})
+        description: "Zookeeper outstanding requests\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        value: "{{ $value }}"
